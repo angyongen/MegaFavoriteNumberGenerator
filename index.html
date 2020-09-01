@@ -1,0 +1,94 @@
+<head>
+	<title>ASCII #MegaFavNumbers</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Creates a big number from an ASCII string">
+	<style>
+		body, button {font-family: monospace;}
+		body {text-align: center; width: 100%; overflow-wrap: break-word;}
+	</style>
+	<script>
+		function add_numeric_string(s1, s2) {
+			var newLength = Math.max(s1.length, s2.length)
+			var output = []
+			var carry = 0
+			var s1_i = s1.length;
+			var s2_i = s2.length;
+			for (var i = 0; i < newLength; i++) {
+				var digitsum = carry
+				carry = 0;
+				if (s1_i > 0) digitsum += parseInt(s1[--s1_i])
+				if (s2_i > 0) digitsum += parseInt(s2[--s2_i])
+				if (digitsum >= 10) {
+					digitsum -= 10
+					carry = 1
+				}
+				output.push(digitsum.toString()[0])
+			}
+			if (carry == 1) output.push("1")
+			return output.reverse().join("")
+		}
+		var two_to_the_power_lookup = ["1"]
+		function two_to_the_power(p) {
+			if (two_to_the_power_lookup.length > p) {
+				return two_to_the_power_lookup[p]
+			} else {
+				var previous_power = two_to_the_power(p-1)
+				var result = add_numeric_string(previous_power, previous_power)
+				two_to_the_power_lookup[p] = result
+				return result
+			}
+		}
+		function string_to_number(str, binary_spacing, decimal3Separator) {
+			var power = 0;
+			var result = "0"
+			var binary = []
+			for (var i = str.length - 1; i >= 0; i--) {
+				var num = str.charCodeAt(i);
+				for (var j = 0; j < 8; j++) {
+					var bit = (num>>j)&1
+					binary.push(bit)
+					if (bit) {
+						result = add_numeric_string(result, two_to_the_power(power))
+					}
+					++power
+				}
+				if (binary_spacing) binary.push(" ")
+			}
+			var spaced_result = []
+			for (var i = result.length - 1; i >= 0; i--) {
+				var digit_from_end = result.length - i - 1
+				if ((digit_from_end%3==0) && decimal3Separator && digit_from_end>0) spaced_result.push(decimal3Separator); 
+				spaced_result.push(result[i])
+			}
+			return {binary:binary.reverse().join(""), decimal:spaced_result.reverse().join("")};
+		}
+		function convert() {
+			var binarySpacing = document.getElementById('binary_spacing').checked
+			var decimal3Separator;
+			if (document.getElementById('decimal_commas').checked) decimal3Separator = ","
+			var output = string_to_number(document.getElementById('input').value, binarySpacing, decimal3Separator)
+			if (output.binary) {
+				document.getElementById('headerBinary').style.visibility = ""
+				document.getElementById('headerDecimal').style.visibility = ""
+				document.getElementById('outputBinary').textContent = output.binary
+				document.getElementById('outputDecimal').textContent = output.decimal
+			} else {
+				document.getElementById('headerBinary').style.visibility = "hidden"
+				document.getElementById('headerDecimal').style.visibility = "hidden"
+				document.getElementById('outputBinary').textContent = ""
+				document.getElementById('outputDecimal').textContent = ""
+			}
+		}
+	</script>
+</head>
+<body>
+	<h1>#MegaFavNumbers</h1>
+	<h3>Creates a big number from an ASCII string</h3>
+	<input id="input" oninput="convert()" style="width:20em"><br>
+	<label><input type="checkbox" id="binary_spacing" oninput="convert()" checked>binary spacing</label><br>
+	<label><input type="checkbox" id="decimal_commas" oninput="convert()" checked>decimal commas</label><br>
+	<h2 id="headerBinary" style="visibility: hidden;">Binary representation</h2>
+	<div id="outputBinary"></div>
+	<h2 id="headerDecimal" style="visibility: hidden;">Decimal representation</h2>
+	<div id="outputDecimal"></div>
+</body>
